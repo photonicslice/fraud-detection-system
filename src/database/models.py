@@ -16,6 +16,21 @@ class User(Base):
     # Add relationship to Card
     cards = relationship("Card", back_populates="user")
 
+class FraudCase(Base):
+    __tablename__ = 'fraud_cases'
+    
+    case_id = Column(Integer, primary_key=True)
+    transaction_id = Column(Integer, ForeignKey('transactions.transaction_id'), unique=True)
+    detected_at = Column(DateTime, default=datetime.utcnow)
+    status = Column(String(20), default='open')  # open, closed, under_review
+    fraud_type = Column(String(50))
+    confidence_score = Column(Float)
+    resolved_at = Column(DateTime)
+    resolution = Column(String(100))
+    
+    # Relationship
+    transaction = relationship("Transaction", back_populates="fraud_case")
+
 class Transaction(Base):
     __tablename__ = 'transactions'
     
