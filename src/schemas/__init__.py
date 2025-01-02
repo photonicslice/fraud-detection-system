@@ -3,7 +3,7 @@
 from .transaction import TransactionCreate, TransactionResponse
 from .user import UserCreate, UserResponse, UserBase
 from .card import CardCreate, CardResponse, CardBase
-from .pattern import TransactionPattern
+from .pattern import TransactionPattern, RiskAnalysis
 
 __all__ = [
     'TransactionCreate',
@@ -14,5 +14,6 @@ __all__ = [
     'CardCreate',
     'CardResponse',
     'CardBase',
-    'TransactionPattern'
+    'TransactionPattern',
+    'RiskAnalysis'
 ]

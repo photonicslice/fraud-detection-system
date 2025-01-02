@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, ARRAY
+#src/database/models.py
+
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, ARRAY, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -12,8 +14,6 @@ class User(Base):
     name = Column(String(100))
     email = Column(String(100), unique=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Add relationship to Card
     cards = relationship("Card", back_populates="user")
 
 class FraudCase(Base):
@@ -27,8 +27,6 @@ class FraudCase(Base):
     confidence_score = Column(Float)
     resolved_at = Column(DateTime)
     resolution = Column(String(100))
-    
-    # Relationship
     transaction = relationship("Transaction", back_populates="fraud_case")
 
 class Transaction(Base):
@@ -37,19 +35,30 @@ class Transaction(Base):
     transaction_id = Column(Integer, primary_key=True)
     card_id = Column(String(50), nullable=False)
     merchant_id = Column(String(50), nullable=False)
-    amount = Column(Float, nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)  # Changed to Numeric for precise currency handling
     timestamp = Column(DateTime, default=datetime.utcnow)
     location_id = Column(Integer, ForeignKey('locations.id'))
     device_id = Column(String(50))
     ip_address = Column(String(50))
-    status = Column(String(20), default='pending')
+    status = Column(String(20), default='pending')  # pending, completed, failed, fraud
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # New columns for risk scores
+    # Risk probabilities
+    fraud_probability = Column(Float, nullable=True, default=0.0)
+    risk_level = Column(String(20), nullable=True)  # LOW, MEDIUM, HIGH
+
+    # Risk scores
     merchant_risk_score = Column(Float, nullable=True, default=0.0)
     location_risk_score = Column(Float, nullable=True, default=0.0)
     amount_risk_score = Column(Float, nullable=True, default=0.0)
+    pattern_risk_score = Column(Float, nullable=True, default=0.0)
+    user_behavior_risk_score = Column(Float, nullable=True, default=0.0)
 
+    # Metadata
+    analysis_version = Column(String(50), nullable=True)  # To track which model version made the prediction
+    analyzed_at = Column(DateTime, nullable=True)  # When the risk analysis was performed
+
+    # Relationships
     location = relationship("Location", back_populates="transactions")
     fraud_case = relationship("FraudCase", back_populates="transaction", uselist=False)
 
@@ -62,8 +71,6 @@ class Card(Base):
     issuing_bank = Column(String(50))
     country_code = Column(String(2))
     created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Add relationship to User
     user = relationship("User", back_populates="cards")
 
 class Location(Base):
@@ -76,7 +83,6 @@ class Location(Base):
     country = Column(String(2))
     postal_code = Column(String(20))
     created_at = Column(DateTime, default=datetime.utcnow)
-    
     transactions = relationship("Transaction", back_populates="location")
 
 class TransactionPattern(Base):
@@ -84,7 +90,7 @@ class TransactionPattern(Base):
     
     pattern_id = Column(Integer, primary_key=True)
     card_id = Column(String(50), ForeignKey('cards.card_id'))
-    avg_transaction_amount = Column(Float)
+    avg_transaction_amount = Column(Numeric(10, 2))  # Changed to Numeric
     avg_daily_transactions = Column(Integer)
     common_merchants = Column(ARRAY(String))
     common_locations = Column(ARRAY(Integer))
